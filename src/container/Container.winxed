@@ -60,10 +60,10 @@ class Rosella.Container
         var type_class = self.__get_type_class(type);
         if (type_class == null)
             Rosella.Error.invalid(__FUNCTION__, "Attempt to register invalid or null type");
-        :(var resolver, var build_options) = self.__sort_options_register(type_class, options);
+        :(var resolver, var lifetime_manager, var build_options) = self.__sort_options_register(type_class, options);
         if (resolver == null)
             resolver = new Rosella.Container.Resolver.Type(type);
-        resolver.set_options(build_options);
+        resolver.set_options(lifetime_manager, build_options);
         if (exists self.type_registry[type_class])
             resolver.previous(self.type_registry[type_class]);
         self.type_registry[type_class] = resolver;
@@ -192,7 +192,7 @@ class Rosella.Container
             }
             Rosella.Error.invalid(__FUNCTION__, "Invalid option at registration: %s", typeof(option));
         }
-        return resolver, build_options;
+        return resolver, lifetime_manager, build_options;
     }
 
     // TODO: Add some sort of flag to say whether option lists should be replaced or merged
@@ -227,7 +227,7 @@ class Rosella.Container
                 resolver = self.type_registry[type];
             if (resolver == null) {
                 resolver = new Rosella.Container.Resolver.Type(type);
-                resolver.set_options([]);
+                resolver.set_options(null, []);
                 // TODO: Should we auto-register this in the type library, or
                 // create a new resolver each time?
             }

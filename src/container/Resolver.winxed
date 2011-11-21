@@ -21,8 +21,10 @@ class Rosella.Container.Resolver
     }
 
     // Set a list of initialization options
-    function set_options(var build)
+    function set_options(var lifetime_manager, var build)
     {
+        if (lifetime_manager != null)
+            self.lifetime_manager = lifetime_manager;
         self.build_options = build;
     }
 
@@ -30,14 +32,14 @@ class Rosella.Container.Resolver
     function resolve(var container, var build)
     {
         if (elements(build) == 0) {
-            if (self.lifetime_manager != null && self.lifetime_manager.has_instance())
-                return self.lifetime_manager.get_instance();
+            if (self.lifetime_manager != null && self.lifetime_manager.has_instance(container))
+                return self.lifetime_manager.get_instance(container);
             build = self.build_options;
         }
         var obj = self.resolve_internal(container);
         self.execute_options(container, obj, build);
         if (self.lifetime_manager != null)
-            self.lifetime_manager.set_instance(obj);
+            self.lifetime_manager.set_instance(container, obj);
         return obj;
     }
 

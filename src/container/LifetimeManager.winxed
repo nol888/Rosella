@@ -5,19 +5,19 @@
 class Rosella.Container.LifetimeManager
 {
     // Determine if we have an instance available to reuse
-    function has_instance()
+    function has_instance(var c)
     {
         Rosella.Error.must_subclass(__CLASS__);
     }
 
     // Set the most recently created instance
-    function set_instance(var obj)
+    function set_instance(var c, var obj)
     {
         Rosella.Error.must_subclass(__CLASS__);
     }
 
     // Get the most recent instance
-    function get_instance()
+    function get_instance(var c)
     {
         Rosella.Error.must_subclass(__CLASS__);
     }
@@ -31,11 +31,11 @@ class Rosella.Container.LifetimeManager.Transient
 {
     function Transient() { }
 
-    function has_instance() { return false; }
+    function has_instance(var c) { return false; }
 
-    function set_instance(var obj) { }
+    function set_instance(var c, var obj) { }
 
-    function get_instance() { return null; }
+    function get_instance(var c) { return null; }
 }
 
 /* Permanent Lifetime Manager
@@ -47,17 +47,17 @@ class Rosella.Container.LifetimeManager.Permanent
 
     function Permanent() { }
 
-    function has_instance()
+    function has_instance(var c)
     {
         return self.data != null;
     }
 
-    function set_instance(var obj)
+    function set_instance(var c, var obj)
     {
         self.data = obj;
     }
 
-    function get_instance()
+    function get_instance(var c)
     {
         return self.data;
     }
@@ -72,25 +72,52 @@ class Rosella.Container.LifetimeManager.Thread
 {
     var lookup;     // Lookup hash thread->instance
 
-    function Thread() { }
-
     function Thread()
     {
         self.lookup = Rosella.get_pmc_keyed_hash();
     }
 
-    function has_instance()
+    function has_instance(var c)
     {
         Rosella.Error.not_implemented(__FUNCTION__);
     }
 
-    function set_instance()
+    function set_instance(var c, var obj)
     {
         Rosella.Error.not_implemented(__FUNCTION__);
     }
 
-    function get_instance()
+    function get_instance(var c)
     {
         Rosella.Error.not_implemented(__FUNCTION__);
+    }
+}
+
+class Rosella.Container.LifetimeManager.PerResolution : Rosella.Container.LifetimeManager
+{
+    var last_resolution_id;
+    var instance;
+
+    function PerResolution() { self.last_resolution_id = -1; }
+
+    function has_instance(var c)
+    {
+        int last_resolution_id = self.last_resolution_id;
+        int resolution_id = c.resolve_id;
+        if (last_resolution_id == resolution_id)
+            return true;
+        return false;
+    }
+
+    function set_instance(var c, var obj)
+    {
+        int resolution_id = c.resolve_id;
+        self.last_resolution_id = resolution_id;
+        self.instance = obj;
+    }
+
+    function get_instance(var c)
+    {
+        return self.instance;
     }
 }
