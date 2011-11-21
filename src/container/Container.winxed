@@ -35,12 +35,15 @@ class Rosella.Container
 {
     var type_registry;
     var aliases;
+    var resolve_id;
+    var current_resolve_list;
 
     // Constructor
     function Container()
     {
         self.type_registry = Rosella.get_pmc_keyed_hash();
         self.aliases = {};
+        self.resolve_id = 0;
     }
 
     /* Public Container API
@@ -124,7 +127,26 @@ class Rosella.Container
         var type_class = self.__get_type_class(type);
         if (type_class == null)
             Rosella.Error.invalid(__FUNCTION__, "Cannot resolve unknown class");
-        return self.__resolve_internal(type_class, options);
+        self.resolve_id++;
+        self.current_resolve_list = Rosella.get_pmc_keyed_hash();
+        self.current_resolve_list[type] = 1;
+        var obj = self.__resolve_internal(type_class, options);
+        return obj;
+    }
+
+    // Resolution function for use internally by the Container library. Do not
+    // use this in your own code!
+    function resolve_internal(var type, var options)
+    {
+        var type_class = self.__get_type_class(type);
+        if (type_class == null)
+            Rosella.Error.invalid(__FUNCTION__, "Cannot resolve unknown class");
+        if (exists self.current_resolve_list[type])
+            Rosella.Error.invalid(__FUNCTION__, "Attempt to resolve type '%s' recursively. Infinite loop detected.", type_class);
+        self.current_resolve_list[type] = 1;
+        var obj = self.__resolve_internal(type_class, options);
+        delete self.current_resolve_list[type];
+        return obj;
     }
 
     /* Private Helper Methods
